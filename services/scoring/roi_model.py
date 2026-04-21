@@ -25,17 +25,22 @@ def monte_carlo_roi(arr: float, reach_pct: float,
     net     = revenue - cost
     base_cost = effort_weeks * eng * eng_cost_wk
     base_net  = float(np.percentile(net, 50))
+    net_value = base_net - base_cost
+
     return ROIResult(
         conservative=float(np.percentile(net, 10)),
         base=base_net,
         optimistic=float(np.percentile(net, 90)),
         dev_cost=base_cost,
-        net=base_net,
-        payback_months=round(base_cost / (base_net / 12), 1) if base_net > 0 else 99,
+        net=net_value,
+        payback_months=round(
+            base_cost / (base_net / 12), 1
+        ) if base_net > 0 else 99,
         derivation={
-            "arr_base": f"${arr:,.0f}",
-            "reach": f"{reach_pct:.1%} of users",
-            "effort": f"{effort_weeks}wks × {eng} engineers × ${eng_cost_wk:,}/wk",
+            "arr_base":    f"${arr:,.0f}",
+            "reach":       f"{reach_pct:.1%} of users",
+            "effort":      f"{effort_weeks}wks × {eng} engineers × ${eng_cost_wk:,}/wk",
+            "net_calc":    f"${base_net:,.0f} revenue − ${base_cost:,.0f} dev cost = ${net_value:,.0f}",
             "simulations": n,
         }
-    )   
+    )
