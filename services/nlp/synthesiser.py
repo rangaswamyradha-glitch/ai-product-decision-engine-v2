@@ -114,7 +114,13 @@ Respond ONLY in JSON with no extra text before or after:
                 "signal_volume": len(docs)
             }
         result["confidence_tier"] = confidence.tier
-        result["confidence"] = vars(confidence)
+        result["confidence"] = {
+            "volume":    confidence.volume,
+            "diversity": confidence.diversity,
+            "coherence": confidence.coherence,
+            "recency":   confidence.recency,
+            "composite": confidence.composite,
+        }
         result["retrieved_doc_count"] = len(all_docs_list)
         result["source_types_used"] = all_source_types
         return result
