@@ -8,14 +8,45 @@ from services.scoring.confidence import calculate_confidence
 
 class FeatureSynthesiser:
     def __init__(self, embedder):
-        self.client = anthropic.Anthropic(
-            api_key=os.getenv("ANTHROPIC_API_KEY")
-        )
+        import os
+        from dotenv import load_dotenv
+        load_dotenv()
+
+        # Try multiple ways to get the API key
+        api_key = os.getenv("ANTHROPIC_API_KEY")
+
+        # Fallback to streamlit secrets if running in cloud
+        if not api_key:
+            try:
+                import streamlit as st
+                api_key = st.secrets.get("ANTHROPIC_API_KEY", "")
+            except Exception:
+                pass
+
+        if not api_key:
+            raise ValueError(
+                "ANTHROPIC_API_KEY not found. "
+                "Check your .env file or Streamlit secrets."
+            )
+
+        self.client = anthropic.Anthropic(api_key=api_key)
         self.embedder = embedder
 
     def generate_hypothesis(self, theme: str, okrs: list[str]) -> dict:
-        docs = self.embedder.retrieve(theme, top_k=20)
-        confidence = calculate_confidence(docs)
+        docs = self.embedder.retrieve(theme, top_k=30)
+
+        # Add theme-based docs for market + internal coverage
+        theme_docs = self.embedder.query_by_theme(theme, top_k=15)
+        all_results = {d["id"]: d for d in docs}
+        for d in theme_docs:
+            if d["id"] not in all_results:
+                all_results[d["id"]] = d
+
+        all_docs_list = list(all_results.values())
+        all_source_types = list(set(
+            d["source_type"] for d in all_docs_list
+        ))
+        confidence = calculate_confidence(docs, all_source_types)
 
         if confidence.tier == "INSUFFICIENT":
             return {
@@ -82,8 +113,8 @@ Respond ONLY in JSON with no extra text before or after:
                 "source_types_used": [],
                 "signal_volume": len(docs)
             }
-
         result["confidence_tier"] = confidence.tier
         result["confidence"] = vars(confidence)
-        result["retrieved_doc_count"] = len(docs)
+        result["retrieved_doc_count"] = len(all_docs_list)
+        result["source_types_used"] = all_source_types
         return result

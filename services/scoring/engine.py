@@ -7,9 +7,26 @@ import re
 
 class ScoringEngine:
     def __init__(self, okrs: list[str]):
-        self.client = anthropic.Anthropic(
-            api_key=os.getenv("ANTHROPIC_API_KEY")
-        )
+        import os
+        from dotenv import load_dotenv
+        load_dotenv()
+
+        api_key = os.getenv("ANTHROPIC_API_KEY")
+
+        if not api_key:
+            try:
+                import streamlit as st
+                api_key = st.secrets.get("ANTHROPIC_API_KEY", "")
+            except Exception:
+                pass
+
+        if not api_key:
+            raise ValueError(
+                "ANTHROPIC_API_KEY not found. "
+                "Check your .env file or Streamlit secrets."
+            )
+
+        self.client = anthropic.Anthropic(api_key=api_key)
         self.okrs = okrs
 
     def score(self, hypothesis: dict) -> dict:

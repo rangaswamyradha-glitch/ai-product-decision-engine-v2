@@ -44,12 +44,19 @@ THEMES = {
             "Competitor has SSO, we need it for enterprise deals",
             "SSO is table stakes for enterprise software in 2026",
             "IT department rejected our purchase because no SSO support",
+            "Single sign-on is required by our security team",
+            "No Okta integration available — deal breaker for us",
+            "Authentication via SAML not supported — blocking adoption",
         ],
         "ticket_phrases": [
             "SSO integration needed for enterprise deployment",
             "SAML/Okta integration required by security team",
             "Need SSO before we can roll out to full company",
             "IT policy requires SSO — blocking company-wide adoption",
+            "Single sign-on not working with our identity provider",
+            "Request: add Okta SAML authentication support",
+            "Security audit requires SSO — urgent feature request",
+            "Cannot onboard 500 users without SSO integration",
         ],
         "sales_phrases": [
             "Deal on hold — Acme Corp IT requires SSO before sign-off — $2.1M",
@@ -57,11 +64,16 @@ THEMES = {
             "Enterprise prospect cited missing SSO as number one blocker",
             "Initech deal stalled — security team requires SAML SSO — $450K",
             "Five enterprise deals blocked by missing SSO this quarter",
+            "Hooli procurement requires Okta integration — $3.5M deal",
+            "Lost Umbrella Ltd to competitor who has SSO — $1.2M",
+            "CTO of Pied Piper flagged SSO as must-have before purchase",
         ],
         "market_phrases": [
             "Gartner report: SSO is table stakes for enterprise SaaS in 2026",
             "Competitor Monday.com launched SSO for all paid tiers Q1 2026",
-            "Industry benchmark: SSO adoption at 89% among enterprise SaaS tools",
+            "Industry benchmark: SSO adoption at 89 percent among enterprise tools",
+            "G2 report: authentication and SSO top enterprise buyer requirements",
+            "Forrester: companies without SSO losing enterprise deals to competitors",
         ],
         "weight": 0.25,
     },
@@ -214,51 +226,92 @@ def generate_sales_signals(n: int = 60) -> list[Signal]:
 
 
 def generate_market_signals(n: int = 40) -> list[Signal]:
+    # Each market signal explicitly tagged with its theme
+    market_signals = [
+        # SSO theme
+        ("Gartner report: SSO is table stakes for enterprise SaaS in 2026", "sso_auth"),
+        ("Competitor Monday.com launched SSO for all paid tiers Q1 2026", "sso_auth"),
+        ("Industry benchmark: SSO adoption at 89 percent among enterprise tools", "sso_auth"),
+        ("G2 report: authentication and SSO top enterprise buyer requirements", "sso_auth"),
+        ("Forrester: companies without SSO losing enterprise deals to competitors", "sso_auth"),
+        # Bulk export theme
+        ("Competitor Notion has bulk export — cited as key advantage in reviews", "bulk_export"),
+        ("G2 category report: data export is top requested feature in PM tools", "bulk_export"),
+        ("Gartner: compliance and audit capabilities required by enterprise buyers", "bulk_export"),
+        ("Linear added bulk export Q1 2026 — customers comparing feature gap", "bulk_export"),
+        # Data loss theme
+        ("Competitor Notion has autosave — cited as advantage in analyst reports", "data_loss"),
+        ("G2 reviews: data loss is top complaint across PM tools category", "data_loss"),
+        ("Industry report: autosave is expected feature in all modern SaaS tools", "data_loss"),
+        # Slow dashboard theme
+        ("Industry benchmark: dashboard load over 3 seconds causes 40 percent abandonment", "slow_dashboard"),
+        ("Competitor Linear cited fast performance as key differentiator in G2 report", "slow_dashboard"),
+        ("Forrester: performance is top-3 reason enterprise customers churn", "slow_dashboard"),
+    ]
+
     signals = []
-    all_market = []
-    for theme in THEMES.values():
-        if "market_phrases" in theme:
-            all_market.extend(theme["market_phrases"])
-    for _ in range(n):
+    # Repeat to reach n signals
+    for i in range(n):
+        content, theme = market_signals[i % len(market_signals)]
         signals.append(Signal(
             id=str(uuid.uuid4()),
             source_type="market",
-            content=random.choice(all_market),
+            content=content,
             metadata={
+                "theme": theme,
                 "source": random.choice(
-                    ["Gartner", "G2 Report", "Analyst brief", "Competitor changelog"]
-                )
+                    ["Gartner", "G2 Report",
+                     "Analyst brief", "Competitor changelog",
+                     "Forrester"]
+                ),
             },
-            created_at=datetime.now() - timedelta(days=random.randint(1, 120)),
+            created_at=datetime.now() - timedelta(
+                days=random.randint(1, 120)
+            ),
         ))
     return signals
 
 
 def generate_internal_signals(n: int = 20) -> list[Signal]:
-    internal_phrases = [
-        "OKR Q2: Reduce churn to below 3.5% — data loss is top driver",
-        "Board priority: Close 3 enterprise deals requiring SSO this quarter",
-        "Engineering velocity: avg 3.2 weeks per medium feature last 6 sprints",
-        "NPS goal: Improve from 32 to 45 by year end",
-        "Customer success: Top 5 churn reasons — data loss is number one",
-        "Finance team requires bulk export for quarterly board reporting",
-        "Compliance audit next quarter — data export capability required",
-        "Enterprise expansion plan requires SSO and bulk export capabilities",
-        "Product strategy: prioritise enterprise compliance features in H2",
-        "Revenue ops: bulk export needed for customer health score reporting",
+    internal_signals = [
+        ("OKR Q2: Reduce churn to below 3.5 percent — data loss is top driver", "data_loss"),
+        ("Board priority: Close 3 enterprise deals requiring SSO this quarter", "sso_auth"),
+        ("Engineering velocity: avg 3.2 weeks per medium feature last 6 sprints", "general"),
+        ("NPS goal: Improve from 32 to 45 by year end", "general"),
+        ("Customer success: Top 5 churn reasons — data loss is number one", "data_loss"),
+        ("Finance team requires bulk export for quarterly board reporting", "bulk_export"),
+        ("Compliance audit next quarter — data export capability required", "bulk_export"),
+        ("Enterprise expansion plan requires SSO and bulk export capabilities", "sso_auth"),
+        ("Product strategy: prioritise enterprise compliance features in H2", "sso_auth"),
+        ("Revenue ops: bulk export needed for customer health score reporting", "bulk_export"),
+        ("SSO integration will unblock five enterprise deals worth $7M ARR", "sso_auth"),
+        ("Data loss bug is causing NPS to drop — fix is top priority", "data_loss"),
+        ("Performance improvements needed — dashboard SLA is 2 seconds", "slow_dashboard"),
+        ("Roadmap: bulk CSV export scheduled for Q3 2026", "bulk_export"),
+        ("Security audit requires SSO — deadline end of quarter", "sso_auth"),
+        ("Customer advisory board: SSO and bulk export are top two requests", "sso_auth"),
+        ("OKR: enterprise ARR growth requires SSO feature shipped by Q3", "sso_auth"),
+        ("Finance director approved budget for bulk export development", "bulk_export"),
+        ("Engineering estimate: SSO implementation 6 weeks with current team", "sso_auth"),
+        ("NPS surveys: slow dashboard mentioned by 34 percent of detractors", "slow_dashboard"),
     ]
+
     signals = []
-    for i, phrase in enumerate(internal_phrases[:n]):
+    for i in range(min(n, len(internal_signals))):
+        content, theme = internal_signals[i]
         signals.append(Signal(
             id=str(uuid.uuid4()),
             source_type="internal",
-            content=phrase,
-            metadata={"source": "Internal strategy doc"},
-            created_at=datetime.now() - timedelta(days=random.randint(1, 30)),
+            content=content,
+            metadata={
+                "theme": theme,
+                "source": "Internal strategy doc",
+            },
+            created_at=datetime.now() - timedelta(
+                days=random.randint(1, 30)
+            ),
         ))
-    return signals
-
-
+    return signals   
 def load_all_demo_signals() -> list[Signal]:
     return (
         generate_reviews(200) +
