@@ -51,12 +51,23 @@ from services.roadmap.generator import RoadmapGenerator
 
 # ── Session state init ─────────────────────────────────────────────────────
 if "embedder" not in st.session_state:
-    with st.spinner("⚙️ Loading signal intelligence engine..."):
-        embedder = SignalEmbedder()
-        signals = load_all_demo_signals()
-        n = embedder.ingest_signals(signals)
-        st.session_state.embedder = embedder
-        st.session_state.signal_count = embedder.count()
+    with st.spinner(
+        "⚙️ Waking up the engine — please wait 20–30 seconds..."
+    ):
+        try:
+            embedder = SignalEmbedder()
+            # Only reload signals if store is empty
+            if embedder.count() == 0:
+                signals = load_all_demo_signals()
+                embedder.ingest_signals(signals)
+            st.session_state.embedder = embedder
+            st.session_state.signal_count = embedder.count()
+        except Exception as e:
+            st.error(
+                f"⚠️ Engine startup error: {e}\n\n"
+                "Please refresh the page to try again."
+            )
+            st.stop()
 
 embedder = st.session_state.embedder
 
